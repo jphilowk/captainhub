@@ -174,8 +174,14 @@
 <script>
 const SCOPES = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.readonly";
 const LS = {
-  shifts:"cap_shifts", clientId:"cap_clientId", anchor:"cap_anchor", rate:"cap_rate"
+  shifts:"cap_shifts", clientId:"cap_clientId", anchor:"cap_anchor", rate:"cap_rate", mailQuery:"cap_mailQuery"
 };
+// Gmail search scoped to work, family, school, guitar, football. Newer than 30d, no promos/social.
+const DEFAULT_Q = 'newer_than:30d -category:promotions -category:social '
+ +'(chipotle OR work OR shift OR schedule OR manager OR payroll '
+ +'OR school OR "naperville north" OR teacher OR homework OR grade OR counselor OR class '
+ +'OR football OR coach OR practice OR team OR guitar OR lesson OR rehearsal '
+ +'OR mom OR dad OR family OR parent)';
 let tokenClient = null, accessToken = null;
 
 /* ---------- storage ---------- */
@@ -289,7 +295,8 @@ async function loadEmails(){
   const el=document.getElementById('emailList');
   el.innerHTML='<div class="empty"><span class="spin"></span></div>';
   try{
-    const list=await gapi('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=15&q=is:important OR is:starred');
+    const q=load(LS.mailQuery, DEFAULT_Q);
+    const list=await gapi('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q='+encodeURIComponent(q));
     if(!list.messages){el.innerHTML='<div class="empty">No important mail right now.</div>';return;}
     const msgs=await Promise.all(list.messages.slice(0,12).map(m=>
       gapi('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+m.id+'?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')));
